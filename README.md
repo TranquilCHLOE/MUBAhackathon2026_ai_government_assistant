@@ -25,8 +25,8 @@ in your demo video as proof the mandatory integration is real and live.
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env   # then fill in your real GONKA_API_KEY (never commit .env)
-uvicorn main:app --reload --port 8000
+cp .env
+py -m uvicorn main:app --reload --port 8000
 ```
 
 Open `frontend/index.html` directly in a browser (or serve it with any
@@ -60,6 +60,7 @@ period realistic. Better to fully polish 2-3 service categories with a
 working live demo than to half-cover everything.
 
 ## usually how they do this kind of project
+
 Step 1: Gather Your Government DataCollect all official handbooks, FAQ spreadsheets, laws, or application guidelines into a folder. This is your system’s source of truth so the AI never guesses.
 
 Step 2: Set Up a RAG Framework (e.g., LangChain)You will use a coding framework like LangChain or LlamaIndex to read those files. LangChain will chop the documents into small pieces and store them in a local Vector Database (like ChromaDB or FAISS).
@@ -67,41 +68,45 @@ Step 2: Set Up a RAG Framework (e.g., LangChain)You will use a coding framework 
 Step 3: Use GonkaRouter to Answer the QuestionWhen a user asks a question, your code will look up the relevant laws in your database, pass them to GonkaRouter, and let the model generate the answer.Here is exactly how the backend Python code looks using GonkaRouter's AI endpoint:pythonimport openai
 
 # 1. Initialize GonkaRouter
+
 client = openai.OpenAI(
-    base_url="https://api.gonkarouter.io/v1",  # Gonka's Gateway URL
-    api_key="your_gonkarouter_api_key"        # Your secret key from gonkarouter.io
+base_url="https://api.gonkarouter.io/v1", # Gonka's Gateway URL
+api_key="your_gonkarouter_api_key" # Your secret key from gonkarouter.io
 )
 
 # 2. Simulate retrieving official government text from your database
+
 retrieved_government_policy = """
-POLICY-ID 402: Small Business Grants are available to local citizens with 
-fewer than 10 employees. Applications must be submitted through portal.gov 
+POLICY-ID 402: Small Business Grants are available to local citizens with
+fewer than 10 employees. Applications must be submitted through portal.gov
 before October 31st.
 """
 
 user_question = "Can a shop with 5 employees get the small business grant, and when is the deadline?"
 
 # 3. Combine your official data with the user's question (The Prompt)
+
 messages = [
-    {
-        "role": "system", 
-        "content": (
-            "You are an official government assistant. Answer the user's question "
-            "ONLY using the provided context. If the answer cannot be found in the context, "
-            "politely say you do not know."
-        )
-    },
-    {
-        "role": "user", 
-        "content": f"Context:\n{retrieved_government_policy}\n\nQuestion: {user_question}"
-    }
+{
+"role": "system",
+"content": (
+"You are an official government assistant. Answer the user's question "
+"ONLY using the provided context. If the answer cannot be found in the context, "
+"politely say you do not know."
+)
+},
+{
+"role": "user",
+"content": f"Context:\n{retrieved_government_policy}\n\nQuestion: {user_question}"
+}
 ]
 
 # 4. Route it to a fast, cost-efficient model via GonkaRouter
+
 response = client.chat.completions.create(
-    model="deepseek/DeepSeek-V4-Flash-0731",  # Choose your model from Gonka's catalog
-    messages=messages,
-    temperature=0.0                           # Keep temperature at 0.0 for strict factual accuracy
+model="deepseek/DeepSeek-V4-Flash-0731", # Choose your model from Gonka's catalog
+messages=messages,
+temperature=0.0 # Keep temperature at 0.0 for strict factual accuracy
 )
 
 print(response.choices.message.content)

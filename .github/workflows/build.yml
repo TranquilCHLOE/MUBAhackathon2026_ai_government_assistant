@@ -1,0 +1,28 @@
+name: Build Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+    - name: Check Python files
+        working-directory: backend
+        run: |
+          python -m compileall .
+
+      - name: Check project structure
+        run: |
+          test -d backend
+          test -d frontend
+          test -f backend/requirements.txt

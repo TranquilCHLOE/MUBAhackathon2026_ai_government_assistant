@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MUBA Hacks - Gov Services Assistant</title>
+<style>
+  body { font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
+  #chat { border: 1px solid #ccc; border-radius: 8px; padding: 16px; min-height: 300px; margin-bottom: 12px; }
+  .msg { margin-bottom: 12px; }
+  .msg.user { text-align: right; color: #333; }
+  .msg.bot { text-align: left; color: #0a5; }
+  .meta { font-size: 12px; color: #888; }
+  #inputRow { display: flex; gap: 8px; }
+  #question { flex: 1; padding: 8px; }
+  select, button { padding: 8px; }
+</style>
+</head>
+<body>
+  <h2>Government Services Assistant</h2>
+  <div id="chat"></div>
+  <div id="inputRow">
+    <select id="language">
+      <option value="ms">Bahasa Malaysia</option>
+      <option value="en" selected>English</option>
+      <option value="zh">中文</option>
+    </select>
+    <input id="question" placeholder="Ask about MyKad, passport, driving license..." />
+    <button onclick="send()">Send</button>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:8000/ask"; // change to your deployed backend URL
+
+    async function send() {
+      const question = document.getElementById("question").value.trim();
+      const language = document.getElementById("language").value;
+      if (!question) return;
+
+      appendMessage("user", question);
+      document.getElementById("question").value = "";
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, language }),
+      });
+      const data = await res.json();
+
+      appendMessage(
+        "bot",
+        data.answer,
+        `confidence: ${data.confidence}% · source: ${data.source} · gonka request: ${data.gonka_request_id}`
+      );
+    }
+
+    function appendMessage(role, text, meta) {
+      const chat = document.getElementById("chat");
+      const div = document.createElement("div");
+      div.className = "msg " + role;
+      div.innerHTML = `<div>${text}</div>` + (meta ? `<div class="meta">${meta}</div>` : "");
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  </script>
+</body>
+</html>

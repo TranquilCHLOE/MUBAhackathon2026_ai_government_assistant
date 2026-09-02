@@ -1,6 +1,0 @@
-fastapi
-uvicorn[standard]
-openai
-sentence-transformers
-pydantic
-python-dotenv

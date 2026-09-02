@@ -13,12 +13,16 @@ routers occasionally rename models or move endpoints.
 
 import json
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 # pip install openai
 from openai import OpenAI
 
-load_dotenv()
+# .env now lives at the project root, one level above backend/, regardless
+# of what directory you run uvicorn from — so point at it explicitly
+# instead of relying on load_dotenv()'s cwd-based default.
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 GONKA_API_KEY = os.environ["GONKA_API_KEY"]
 GONKA_BASE_URL = os.environ.get("GONKA_BASE_URL", "https://api.gonkarouter.io/v1")

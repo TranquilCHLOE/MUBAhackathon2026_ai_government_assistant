@@ -35,10 +35,10 @@ your backend is running.
 
 ## Before you submit — checklist
 
-- [ ] Confirm the model name and base_url in `.env` still match the
-      current Gonka Router docs (routers occasionally add/rename models).
+- [/] Confirm the model name and base_url in `.env` still match the
+  current Gonka Router docs (routers occasionally add/rename models).
 - [ ] Expand `knowledge_base.json` with more entries from your compiled
-      JPN/JPJ notes — 3 sample entries are included as a starting point.
+      JPN/JPJ notes — 3 sample entries are included as a starting point. (will use langchain)
 - [ ] `git init` this repo no earlier than 26 August 2026 — organizers
       may inspect commit timestamps (Section 2 of the rules).
 - [ ] Add a short note in your README/pitch declaring every AI tool used
@@ -48,9 +48,9 @@ your backend is running.
       of the 3 languages, with the Gonka request id visible.
 - [ ] Add a disclaimer in the UI that fee/procedure info may change —
       always verify with the official JPN/JPJ portal.
-- [ ] Make sure `.env` (with your real key) is in `.gitignore` and was
-      never committed — `.env.example` should only ever contain a
-      placeholder, not a working key.
+- [/] Make sure `.env` (with your real key) is in `.gitignore` and was
+  never committed — `.env.example` should only ever contain a
+  placeholder, not a working key.
 
 ## Notes on scope
 

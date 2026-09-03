@@ -1,10 +1,4 @@
 """
-One-time (or whenever data/ changes) ingestion script.
-
-Reads every document in data/ (.txt, .pdf), splits them into chunks with
-LangChain, embeds the chunks with a multilingual sentence-transformer
-model, and persists everything into a local Chroma vector store on disk.
-
 Run this again any time you add, remove, or edit files in data/:
 
     python ingest.py

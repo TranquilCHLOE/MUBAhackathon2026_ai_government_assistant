@@ -1,66 +1,125 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>MUBA Hacks - Gov Services Assistant</title>
-<style>
-  body { font-family: sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
-  #chat { border: 1px solid #ccc; border-radius: 8px; padding: 16px; min-height: 300px; margin-bottom: 12px; }
-  .msg { margin-bottom: 12px; }
-  .msg.user { text-align: right; color: #333; }
-  .msg.bot { text-align: left; color: #0a5; }
-  .meta { font-size: 12px; color: #888; }
-  #inputRow { display: flex; gap: 8px; }
-  #question { flex: 1; padding: 8px; }
-  select, button { padding: 8px; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MyAssist — Malaysian Public Service Assistant</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#f5f7fb;color:#172033}.wrap{max-width:980px;margin:0 auto;padding:32px 18px 50px}.hero{margin-bottom:22px}.hero h1{margin:0 0 8px;font-size:32px}.hero p{margin:0;color:#5e687b}.card{background:#fff;border:1px solid #e3e7ef;border-radius:16px;padding:20px;margin-top:16px;box-shadow:0 5px 20px rgba(20,30,50,.05)}textarea{width:100%;min-height:110px;border:1px solid #ccd3df;border-radius:12px;padding:14px;font-size:16px;resize:vertical}select,button{border-radius:10px;padding:11px 14px;font-size:15px}select{border:1px solid #ccd3df;background:#fff}button{border:0;background:#172033;color:#fff;cursor:pointer;font-weight:700}button:disabled{opacity:.5;cursor:wait}.row{display:flex;gap:10px;align-items:center;margin-top:12px}.answer{white-space:pre-wrap;line-height:1.6;font-size:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.panel h3{margin:0 0 12px;font-size:15px}.kv{display:grid;grid-template-columns:120px 1fr;gap:7px;font-size:14px}.label{color:#687386}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-all}.source{border-top:1px solid #edf0f5;padding:12px 0}.source:first-child{border-top:0}.source p{margin:5px 0;line-height:1.45;font-size:14px}.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef7ef;font-size:12px;font-weight:700}.notice{font-size:13px;color:#687386;line-height:1.5}.error{color:#a32020}.hidden{display:none}@media(max-width:700px){.grid{grid-template-columns:1fr}.kv{grid-template-columns:100px 1fr}}
+  </style>
 </head>
 <body>
-  <h2>Government Services Assistant</h2>
-  <div id="chat"></div>
-  <div id="inputRow">
-    <select id="language">
-      <option value="ms">Bahasa Malaysia</option>
-      <option value="en" selected>English</option>
-      <option value="zh">中文</option>
-    </select>
-    <input id="question" placeholder="Ask about MyKad, passport, driving license..." />
-    <button onclick="send()">Send</button>
+<div class="wrap">
+  <div class="hero">
+    <h1>🇲🇾 MyAssist</h1>
+    <p>Multilingual Malaysian Public Service Assistant · Official-source grounded</p>
   </div>
 
-  <script>
-    const API_URL = "http://localhost:8000/ask"; // change to your deployed backend URL
+  <div class="card">
+    <textarea id="question" placeholder="Ask about MyKad, passport, or driving licence..."></textarea>
+    <div class="row">
+      <select id="language"><option value="en">English</option><option value="ms">Bahasa Malaysia</option><option value="zh">中文</option></select>
+      <button id="askBtn">Ask MyAssist</button>
+    </div>
+    <p class="notice">MyAssist answers from the current official-source knowledge base. Fees and procedures can change; verify the latest information with the cited government portal.</p>
+  </div>
 
-    async function send() {
-      const question = document.getElementById("question").value.trim();
-      const language = document.getElementById("language").value;
-      if (!question) return;
+  <div id="result" class="hidden">
+    <div class="card">
+      <h2>Answer</h2>
+      <div id="answer" class="answer"></div>
+    </div>
 
-      appendMessage("user", question);
-      document.getElementById("question").value = "";
+    <div class="grid">
+      <div class="card panel">
+        <h3>🔎 KNOWLEDGE RETRIEVAL</h3>
+        <div id="retrieval"></div>
+      </div>
+      <div class="card panel">
+        <h3>⚡ AI INFERENCE</h3>
+        <div id="inference"></div>
+      </div>
+    </div>
 
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, language }),
-      });
-      const data = await res.json();
+    <div class="card panel">
+      <h3>📚 OFFICIAL SOURCES / RETRIEVED PASSAGES</h3>
+      <div id="sources"></div>
+    </div>
+  </div>
+</div>
+<script>
+const API_URL = "http://127.0.0.1:8000";
+const $ = id => document.getElementById(id);
+function esc(v){return String(v ?? "").replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function kv(label,value){return `<div class="label">${esc(label)}</div><div>${esc(value)}</div>`}
 
-      appendMessage(
-        "bot",
-        data.answer,
-        `confidence: ${data.confidence}% · source: ${data.source} · gonka request: ${data.gonka_request_id}`
-      );
-    }
+$("askBtn").onclick = async () => {
+  const question = $("question").value.trim();
+  if(!question) return;
+  const btn=$("askBtn"); btn.disabled=true; btn.textContent="Asking...";
+  $("result").classList.remove("hidden"); $("answer").textContent="Loading...";
+  try{
+    const r=await fetch(`${API_URL}/ask`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question,language:$("language").value})});
+    const data=await r.json();
+    if(!r.ok) throw new Error(data.detail || "Request failed");
 
-    function appendMessage(role, text, meta) {
-      const chat = document.getElementById("chat");
-      const div = document.createElement("div");
-      div.className = "msg " + role;
-      div.innerHTML = `<div>${text}</div>` + (meta ? `<div class="meta">${meta}</div>` : "");
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
-    }
-  </script>
+    // --- PATCH START: Map old backend flat data to new UI structure ---
+
+    // 1. Build the "retrieval" object from the old flat response
+    const retrievedCount = (data.retrieved || []).length;
+    const ret = {
+      provider: "LangChain + ChromaDB",
+      chunks_retrieved: retrievedCount,
+      min_similarity: "N/A (old backend)",
+      status: retrievedCount > 0 ? "completed" : "insufficient_context"
+    };
+
+    // 2. Build the "inference" object from the old flat response
+    const inf = {
+      provider: "Gonka Router",
+      model: data.model || "—",
+      status: data.answer ? "completed" : "error",
+      request_id: data.gonka_request_id || "—",
+      latency_ms: "—"
+    };
+
+    // 3. Patch the retrieved entries: rename "text_ms" → "text" and add missing fields
+    const entries = (data.retrieved || []).map(e => ({
+      ...e,
+      text: e.text_ms || e.text || "No content",
+      source_url: e.source_url || ""
+    }));
+
+    // --- END PATCH ---
+
+    $("answer").textContent = data.answer || "No answer returned.";
+
+    // Display Retrieval panel
+    $("retrieval").innerHTML = `<div class="kv">${kv("Provider", ret.provider)}${kv("Chunks", ret.chunks_retrieved)}${kv("Min similarity", ret.min_similarity)}${kv("Status", ret.status)}</div>`;
+
+    // Display Inference panel
+    $("inference").innerHTML = `<div class="kv">${kv("Provider", inf.provider)}${kv("Model", inf.model)}${kv("Status", inf.status)}${kv("Request ID", inf.request_id)}${kv("Latency", inf.latency_ms)}</div>`;
+
+    // Display Sources
+    $("sources").innerHTML = entries.length ? entries.map((e,i)=>`
+      <div class="source">
+        <span class="badge">Source ${i+1} · similarity ${esc(e.similarity)}</span>
+        <p><b>${esc(e.source)}</b>${e.page!==null&&e.page!==undefined?` · page ${esc(Number(e.page)+1)}`:""}</p>
+        <p>${esc(e.text)}</p>
+        ${e.source_url?`<p>Official URL: ${esc(e.source_url)}</p>`:""}
+      </div>
+    `).join("") : "<p class='notice'>No sufficiently relevant official passages were retrieved. Gonka was not called.</p>";
+
+  }catch(e){
+    $("answer").innerHTML=`<span class="error">${esc(e.message)}</span>`;
+    $("retrieval").innerHTML="";
+    $("inference").innerHTML="";
+    $("sources").innerHTML="";
+  }finally{
+    btn.disabled=false;
+    btn.textContent="Ask MyAssist";
+  }
+};
+</script>
 </body>
 </html>

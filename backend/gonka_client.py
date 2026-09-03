@@ -14,6 +14,7 @@ routers occasionally rename models or move endpoints.
 import json
 import os
 from pathlib import Path
+import re
 
 from dotenv import load_dotenv
 # pip install openai
@@ -78,16 +79,32 @@ def ask_gonka(question: str, context_entries: list, target_lang: str = "en") -> 
             {"role": "system", "content": _SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0.2,
+        temperature=0.0,
     )
 
     raw_text = response.choices[0].message.content
 
-    try:
-        parsed = json.loads(raw_text)
-    except json.JSONDecodeError:
-        # Model didn't return clean JSON — fall back gracefully instead of crashing
-        parsed = {"answer": raw_text, "confidence": 50, "source": "unclear"}
+    # --- NEW JSON EXTRACTION (Robust!) ---
+    def extract_json(text: str) -> dict:
+        text = (text or "").strip()
+        # Remove markdown code blocks
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.I)
+            text = re.sub(r"\s*```$", "", text)
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            # Try to find anything that looks like { ... }
+            match = re.search(r"\{.*\}", text, flags=re.S)
+            if match:
+                try:
+                    return json.loads(match.group(0))
+                except json.JSONDecodeError:
+                    pass
+        return {"answer": text, "confidence": 0, "source": "unknown"}
+
+    parsed = extract_json(raw_text)
+    # --- END OF NEW BLOCK ---
 
     parsed["gonka_request_id"] = getattr(response, "id", None)
     parsed["model"] = GONKA_MODEL

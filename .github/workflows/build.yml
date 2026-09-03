@@ -16,12 +16,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-    - name: Check Python files
+      - name: Check Python files # ✅ INDENTED under "steps:"
         working-directory: backend
         run: |
           python -m compileall .
 
-      - name: Check project structure
+      - name: Check project structure # ✅ INDENTED under "steps:"
         run: |
           test -d backend
           test -d frontend

@@ -70,6 +70,15 @@ def main():
         documents=chunks,
         embedding=embeddings,
         persist_directory=str(PERSIST_DIR),
+        # Force cosine distance so similarity_search_with_relevance_scores()
+        # in rag.py returns proper 0-1 scores. Without this, Chroma defaults
+        # to raw L2 distance, which similarity_search_with_relevance_scores()
+        # still tries to convert as if it were cosine — producing negative
+        # scores like -13.36 (and the "must be between 0 and 1" warning).
+        # Those negative scores never pass main.py's `> max_similarity`
+        # check (which starts at 0.0), so max_similarity is always 0.0 and
+        # every query wrongly falls through to the web-scrape fallback.
+        collection_metadata={"hnsw:space": "cosine"},
     )
 
     print(f"Done. Vector store persisted to {PERSIST_DIR}")

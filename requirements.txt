@@ -11,3 +11,4 @@ chromadb
 sentence-transformers
 pypdf
 unstructured
+firecrawl-py

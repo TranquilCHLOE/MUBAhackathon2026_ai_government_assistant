@@ -23,6 +23,7 @@ Router catalog and set GONKA_MODEL_2 in .env before you demo, or both
 
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor
 from difflib import SequenceMatcher
 from pathlib import Path
 import re
@@ -228,12 +229,26 @@ def _reconcile(result_a: dict, result_b: dict) -> dict:
     }
 
 
+# Both models are fully independent calls with no shared state, so we run
+# them concurrently instead of one-after-another — this is the single
+# biggest latency win available, since it turns "wait for model A, then
+# wait for model B" into "wait for whichever one is slower."
+_executor = ThreadPoolExecutor(max_workers=2)
+
+
+def _call_both_models(system_prompt: str, user_prompt: str) -> tuple:
+    future_a = _executor.submit(_call_model, GONKA_MODEL, system_prompt, user_prompt)
+    future_b = _executor.submit(_call_model, GONKA_MODEL_2, system_prompt, user_prompt)
+    return future_a.result(), future_b.result()
+
+
 def ask_gonka(question: str, context_entries: list, target_lang: str = "en") -> dict:
     """
     Government-services Q&A. Sends the retrieved context + user question to
-    TWO Gonka-hosted models and reconciles them into one consensus answer
-    (see `_reconcile`). Returned dict includes `model_votes` with both raw
-    per-model answers/scores/request ids for demo transparency.
+    TWO Gonka-hosted models CONCURRENTLY and reconciles them into one
+    consensus answer (see `_reconcile`). Returned dict includes
+    `model_votes` with both raw per-model answers/scores/request ids for
+    demo transparency.
     """
     context_block = "\n\n".join(
         f"[{e['source']}] {e['text_ms']}" for e in context_entries
@@ -246,8 +261,7 @@ def ask_gonka(question: str, context_entries: list, target_lang: str = "en") -> 
         f"Answer in {language_name}."
     )
 
-    result_a = _call_model(GONKA_MODEL, _QA_SYSTEM_PROMPT, user_prompt)
-    result_b = _call_model(GONKA_MODEL_2, _QA_SYSTEM_PROMPT, user_prompt)
+    result_a, result_b = _call_both_models(_QA_SYSTEM_PROMPT, user_prompt)
     return _reconcile(result_a, result_b)
 
 
@@ -255,8 +269,8 @@ def verify_claim(claim: str, context_entries: list, target_lang: str = "en") -> 
     """
     Fact-checking / claim verification. Sends the CLAIM plus supporting
     context (local KB and/or real-time web search results, gathered by
-    main.py's /verify endpoint) to TWO Gonka-hosted models and reconciles
-    them into a single Truth Score + reasoning trace.
+    main.py's /verify endpoint) to TWO Gonka-hosted models CONCURRENTLY and
+    reconciles them into a single Truth Score + reasoning trace.
     """
     context_block = "\n\n".join(
         f"[{e['source']}] {e['text_ms']}" for e in context_entries
@@ -269,6 +283,5 @@ def verify_claim(claim: str, context_entries: list, target_lang: str = "en") -> 
         f"Respond in {language_name}."
     )
 
-    result_a = _call_model(GONKA_MODEL, _VERIFY_SYSTEM_PROMPT, user_prompt)
-    result_b = _call_model(GONKA_MODEL_2, _VERIFY_SYSTEM_PROMPT, user_prompt)
+    result_a, result_b = _call_both_models(_VERIFY_SYSTEM_PROMPT, user_prompt)
     return _reconcile(result_a, result_b)

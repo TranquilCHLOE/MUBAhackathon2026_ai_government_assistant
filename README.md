@@ -2,6 +2,11 @@
 
 **MUBA Hacks 2026 — Gonka Track**
 
+## Links
+
+- **Live Deployment:** _TODO: paste your Vercel deployment URL here_
+- **Pitch Video (YouTube):** _TODO: paste your YouTube link here_
+
 ## Project Description
 
 MyAssist is a trilingual (Malay / English / Chinese) chat assistant for
@@ -123,6 +128,8 @@ during development of this project:
 - **DeepSeek** — code generation and debugging assistance.
 
 ## Team Members
+
+_(fill in your team's names and roles below)_
 
 | Name           | Role                |
 | -------------- | ------------------- |

@@ -2,6 +2,22 @@
 name = "gov-services-assistant"
 version = "0.1.0"
 requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "openai",
+    "pydantic",
+    "python-dotenv",
+    "langchain",
+    "langchain-community",
+    "langchain-huggingface",
+    "langchain-chroma",
+    "chromadb",
+    "sentence-transformers",
+    "pypdf",
+    "unstructured",
+    "firecrawl-py",
+]
 
 [tool.vercel]
 entrypoint = "backend.main:app"

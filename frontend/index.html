@@ -53,6 +53,7 @@
       <p>Ask a question or paste a claim/URL — routed automatically, cross-checked by two AI models.</p>
     </div>
     <select id="language">
+      <option value="auto" selected>Auto-detect</option>
       <option value="en">English</option>
       <option value="ms">Bahasa Malaysia</option>
       <option value="zh">中文</option>
@@ -133,7 +134,7 @@ function renderBotBubble(row, data, errorMsg){
     return;
   }
 
-  const mode = data.mode === "claim" ? "🕵️ Claim check" : "🔎 Q&A";
+  const mode = data.mode === "claim" ? "🕵️ Claim check" : data.mode === "chitchat" ? "👋 Chat" : "🔎 Q&A";
   const truthScore = data.truth_score ?? data.confidence ?? null;
   const hasVotes = data.model_votes && data.model_votes.length > 0;
 

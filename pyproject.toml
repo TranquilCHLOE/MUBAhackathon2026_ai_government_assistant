@@ -8,16 +8,30 @@ dependencies = [
     "openai",
     "pydantic",
     "python-dotenv",
-    "langchain",
     "langchain-community",
+    "langchain-text-splitters",
     "langchain-huggingface",
     "langchain-chroma",
     "chromadb",
     "sentence-transformers",
+    "torch",
     "pypdf",
-    "unstructured",
     "firecrawl-py",
 ]
 
 [tool.vercel]
 entrypoint = "backend.main:app"
+
+# `sentence-transformers` pulls in `torch` transitively. PyPI's default
+# torch wheel bundles the full CUDA/GPU stack (several GB of nvidia-*
+# packages) even though this project only ever runs CPU inference on a
+# small multilingual embedding model. Pointing torch specifically at
+# PyTorch's official CPU-only wheel index avoids that bloat and is the
+# main fix for the "bundle size exceeds 500 MB" build error.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }

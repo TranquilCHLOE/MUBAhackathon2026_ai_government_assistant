@@ -3,12 +3,11 @@ uvicorn[standard]
 openai
 pydantic
 python-dotenv
-langchain
 langchain-community
+langchain-text-splitters
 langchain-huggingface
 langchain-chroma
 chromadb
 sentence-transformers
 pypdf
-unstructured
 firecrawl-py

@@ -3,6 +3,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from concurrent.futures import ThreadPoolExecutor
 import re
+import sys
+from pathlib import Path
+
+# When run locally via `cd backend && uvicorn main:app`, Python puts this
+# file's own directory on sys.path automatically, so the bare `from rag
+# import ...` style imports below just work. But Vercel imports this
+# module as `backend.main:app` from the REPO ROOT (see pyproject.toml's
+# [tool.vercel] entrypoint) — in that case `backend/` is NOT on sys.path,
+# so the same imports would fail with ModuleNotFoundError. Adding it
+# explicitly here makes both environments work without touching the
+# import style used everywhere else in this file.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from rag import knowledge_base
 from gonka_client import ask_gonka, verify_claim

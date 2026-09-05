@@ -1,0 +1,7 @@
+[project]
+name = "gov-services-assistant"
+version = "0.1.0"
+requires-python = ">=3.10"
+
+[tool.vercel]
+entrypoint = "backend.main:app"

@@ -4,7 +4,6 @@
 
 ## Links
 
-- **Live Deployment:** _TODO: paste your Vercel deployment URL here_
 - **Pitch Video (YouTube):https://youtu.be/nT3HOSg3qHE
 
 ## Project Description
